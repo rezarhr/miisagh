@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>داشبورد مالی فراگستر</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'Vazirmatn', Tahoma, sans-serif !important; -webkit-tap-highlight-color: transparent; }
+  
+  body { background-color: #f1f5f9; }
+  
+  ::-webkit-scrollbar { height: 6px; width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+  
+  .clean-panel { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+
+  .text-debit { color: #059669 !important; font-weight: 700; } 
+  .bg-debit { background-color: #f0fdf4 !important; border-color: #bbf7d0 !important; }
+  .text-credit { color: #e11d48 !important; font-weight: 700; } 
+  .bg-credit { background-color: #fff1f2 !important; border-color: #fecdd3 !important; }
+
+  .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: separate; border-spacing: 0; min-width: 100%; } 
+  
+  th, td { text-align: right; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+  th { cursor: pointer; user-select: none; transition: background-color 0.2s; position: relative; }
+  th:hover { background-color: #f8fafc !important; }
+
+  .density-content { width: auto; table-layout: auto; }
+  .density-content th, .density-content td { padding: 0.6rem 0.75rem; white-space: nowrap; font-size: 0.85rem; }
+  .density-content .wrap-text { white-space: nowrap !important; } 
+  
+  .density-full { width: 100%; table-layout: auto; }
+  .density-full th, .density-full td { padding: 0.5rem; font-size: 0.8rem; }
+  .density-full td:not(.wrap-text) { white-space: nowrap; } 
+  .density-full .wrap-text { white-space: normal !important; min-width: 150px; max-width: 300px; line-height: 1.6; word-wrap: break-word; } 
+  
+  .density-spacious { width: auto; table-layout: auto; }
+  .density-spacious th, .density-spacious td { padding: 1.25rem 0.8rem; white-space: nowrap; font-size: 0.9rem; }
+  .density-spacious .wrap-text { white-space: normal !important; min-width: 250px; line-height: 1.8; }
+
+  .sticky-col-1 { position: sticky; right: 0; z-index: 15; border-left: 1px solid #cbd5e1; }
+  .sticky-col-2 { position: sticky; z-index: 10; border-left: 1px solid #cbd5e1; box-shadow: -4px 0 6px -4px rgba(0,0,0,0.05); }
+  
+  thead th { background-color: #ffffff; color: #0f172a; font-weight: 800; border-bottom: 2px solid #0f172a; z-index: 1; }
+  thead .sticky-col-1 { z-index: 30; }
+  thead .sticky-col-2 { z-index: 20; }
+
+  .row-group-1 { background-color: #ffffff; }
+  .row-group-alt { background-color: #f8fafc; } 
+  .row-group-2 { background-color: #e2e8f0; } 
+  
+  .row-group-1 td.sticky-col-1, .row-group-1 td.sticky-col-2 { background-color: #ffffff; }
+  .row-group-alt td.sticky-col-1, .row-group-alt td.sticky-col-2 { background-color: #f8fafc; }
+  .row-group-2 td.sticky-col-1, .row-group-2 td.sticky-col-2 { background-color: #e2e8f0; }
+
+  tr:hover { background-color: #cbd5e1 !important; }
+  tr:hover td.sticky-col-1, tr:hover td.sticky-col-2 { background-color: #cbd5e1 !important; }
+  
+  .loader-spinner { border: 3px solid #e2e8f0; border-top: 3px solid #0f172a; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  /* استایل‌های مربوط به پرینت */
+  #print-area { display: none; }
+  @media print {
+    body > *:not(#print-area) { display: none !important; }
+    #print-area { display: block !important; width: 100%; background: #ffffff; color: #000000; }
+    @page { size: landscape; margin: 10mm; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-slate-200">
+
+  <!-- ناحیه مخفی برای محتوای پرینت -->
+  <div id="print-area"></div>
+
+  <div id="col-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm max-h-[85vh] flex flex-col">
+      <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+        <h3 class="font-bold text-slate-800 text-base">نمایش ستون‌ها</h3>
+        <button onclick="toggleColMenu()" class="p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-800 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div id="col-menu-content" class="p-2 overflow-y-auto flex-1 flex flex-col gap-1"></div>
+    </div>
+  </div>
+
+  <header class="bg-slate-900 sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div class="p-1.5 bg-slate-800 rounded-lg text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+      </div>
+      <div><h1 class="text-base font-bold tracking-tight text-white">داشبورد مالی فراگستر</h1></div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto p-2 sm:p-4 md:p-6 flex flex-col gap-3 sm:gap-4">
+    
+    <div class="clean-panel rounded-xl p-1 flex items-center gap-1 overflow-x-auto hide-scrollbar bg-white">
+      <div id="tabs-container" class="flex gap-1 w-full"></div>
+    </div>
+
+    <div id="summary-cards" class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3"></div>
+
+    <div class="clean-panel rounded-xl p-2 sm:p-3 flex flex-col md:flex-row gap-2 sm:gap-3 justify-between">
+      
+      <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+        <div class="relative w-full md:w-64">
+          <input type="text" id="search-input" onkeyup="handleSearch()" placeholder="جستجو..." class="w-full pl-3 pr-10 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-slate-800 focus:border-slate-800 outline-none transition-all placeholder:font-normal">
+          <svg class="w-4 h-4 text-slate-400 absolute right-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+        <div class="relative w-full md:w-64 hidden" id="search-input-2-container">
+          <input type="text" id="search-input-2" onkeyup="handleSearch()" placeholder="جستجو با نام کالا..." class="w-full pl-3 pr-10 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-slate-800 focus:border-slate-800 outline-none transition-all placeholder:font-normal">
+          <svg class="w-4 h-4 text-slate-400 absolute right-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+      </div>
+
+      <div class="flex gap-2 overflow-x-auto pb-1" style="scrollbar-width: none;">
+        <button onclick="cycleDensity()" class="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 text-slate-700">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+          <span id="density-label">اندازه محتوا</span>
+        </button>
+        
+        <button onclick="toggleColMenu()" class="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 text-slate-700">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          ستون‌ها
+        </button>
+
+        <!-- دکمه پرینت -->
+        <button onclick="printCurrentTab()" class="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          چاپ (پرینت)
+        </button>
+
+        <button onclick="fetchDataFromAPI()" class="flex items-center gap-1.5 px-3 py-2 bg-slate-800 text-white hover:bg-slate-700 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          بروزرسانی
+        </button>
+      </div>
+    </div>
+
+    <div class="clean-panel rounded-xl flex-1 flex flex-col relative overflow-hidden z-10" style="min-height: 55vh;">
+      
+      <div id="loading-state" class="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center">
+        <div class="loader-spinner mb-3"></div>
+        <p class="text-xs sm:text-sm font-bold text-slate-800 animate-pulse mt-2">دریافت اطلاعات...</p>
+      </div>
+
+      <div id="error-state" class="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center hidden">
+        <div class="text-rose-600 mb-2"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+        <p id="error-message" class="text-slate-800 font-bold text-sm mb-4">خطا در ارتباط با سرور</p>
+        <button onclick="fetchDataFromAPI()" class="px-5 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold">تلاش مجدد</button>
+      </div>
+
+      <div id="empty-state" class="absolute inset-0 z-40 bg-white flex flex-col items-center justify-center hidden">
+        <p class="text-slate-400 font-medium text-sm">اطلاعاتی یافت نشد.</p>
+      </div>
+
+      <div id="table-wrapper" class="table-container flex-1">
+        <table id="main-table" class="density-content">
+          <thead><tr id="table-head-row"></tr></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+
+      <div class="p-2 sm:p-3 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-start">
+          <div class="text-[11px] sm:text-xs font-bold text-slate-600" id="page-info"></div>
+          <div class="h-4 w-px bg-slate-300 hidden sm:block"></div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] sm:text-xs font-bold text-slate-500">تعداد:</span>
+            <select id="rows-per-page-select" onchange="changeRowsPerPage(this.value)" class="bg-white border border-slate-300 text-slate-800 text-xs font-bold rounded focus:ring-1 focus:ring-slate-800 block px-1 py-0.5 outline-none cursor-pointer">
+              <option value="20">۲۰</option>
+              <option value="50">۵۰</option>
+              <option value="100">۱۰۰</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex gap-1 w-full sm:w-auto justify-end" id="pagination-controls"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycby_SuHCGjpL8IHlElNIEHnLPxu7d4167V0MoeV-NTYkJKlecp3EBbbkakGf2n-mFJWk/exec"; 
+    
+    const STATE = {
+      tabs: [],
+      currentTab: null,
+      schema: {}, 
+      rawData: {},
+      filteredData: [],
+      page: 1,
+      rowsPerPage: 50,
+      density: 0,
+      densityClasses: ['density-content', 'density-full', 'density-spacious'],
+      densityLabels: ['اندازه محتوا', 'تمام عرض', 'عریض'],
+      sortCol: null,
+      sortAsc: true
+    };
+
+    function replaceArabicChars(str) {
+      if (!str) return '';
+      return String(str).replace(/ي/g, 'ی').replace(/ك/g, 'ک');
+    }
+
+    function toPersianDigits(str) {
+      if (str === null || str === undefined) return '';
+      const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+      return String(str).replace(/\d/g, x => persianDigits[x]);
+    }
+
+    function extractNumber(val) {
+      if (val === null || val === undefined || val === '') return NaN;
+      let str = String(val);
+      const persianDigits = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+      for (let i = 0; i < 10; i++) str = str.replace(persianDigits[i], i);
+      let clean = str.replace(/[^\d.-]/g, ''); 
+      if (!clean || clean === '-' || clean === '.') return NaN;
+      return parseFloat(clean);
+    }
+
+    function isFinancialColumn(colName) {
+      const norm = replaceArabicChars(colName).replace(/ |\u200C/g, ''); 
+      return norm.includes('بدهکار') || norm.includes('بستانکار') || norm.includes('طلبکار') || 
+             norm.includes('مانده') || norm.includes('ماانده') || norm.includes('مبلغ') || norm.includes('ورودی') || norm.includes('خروجی');
+    }
+
+    function formatFa(num) {
+      if (num === null || isNaN(num)) return '-';
+      let formatted = Math.abs(num).toLocaleString('en-US'); 
+      return toPersianDigits(formatted); 
+    }
+
+    function formatDateTime(dateStr) {
+      if (!dateStr || dateStr === '-') return '-';
+      let clean = String(dateStr).replace(/[Zz]/g, '').trim();
+      if (clean.includes('T')) {
+          let parts = clean.split('T');
+          let datePart = parts[0].replace(/-/g, '/');
+          return toPersianDigits(datePart);
+      }
+      return toPersianDigits(clean.split(' ')[0].replace(/-/g, '/'));
+    }
+
+    function buildDynamicSchema(sheetsArray) {
+      STATE.tabs = [];
+      STATE.schema = {};
+      STATE.rawData = {};
+
+      const preferredOrder = ["لیست مالی (بدهکاران)", "لیست مالی (طلبکاران)", "صورت ریز کل مشتریان", "موجودی براساس مشتری", "موجودی کالا", "وضعیت بارفروشها"];
+      
+      sheetsArray.sort((a, b) => {
+        let idxA = preferredOrder.indexOf(a.sheetName);
+        let idxB = preferredOrder.indexOf(b.sheetName);
+        if (idxA === -1) idxA = 99;
+        if (idxB === -1) idxB = 99;
+        return idxA - idxB;
+      });
+
+      sheetsArray.forEach((sheet) => {
+        const tabId = sheet.sheetName;
+        STATE.tabs.push({ id: tabId, title: sheet.sheetName });
+        STATE.rawData[tabId] = sheet.data;
+
+        let cols = [{ id: 'row_index', title: 'ردیف', type: 'index', visible: true, stickyIndex: 0 }];
+        
+        if (sheet.data.length > 0) {
+          const keys = Object.keys(sheet.data[0]);
+          
+          let anchor1Id = null;
+          let anchor2Id = null;
+
+          if (tabId === 'صورت ریز کل مشتریان') {
+             let normSanad = replaceArabicChars('شماره سند').replace(/ |\u200C/g, '');
+             let normHesab = replaceArabicChars('عنوان حساب').replace(/ |\u200C/g, '');
+             
+             keys.forEach(key => {
+                 let nKey = replaceArabicChars(key).replace(/ |\u200C/g, '');
+                 if (nKey.includes(normSanad)) anchor1Id = key;
+                 if (nKey.includes(normHesab)) anchor2Id = key;
+             });
+          } else {
+             anchor1Id = 'row_index';
+             let targetStickyKeyword = 'عنوان حساب';
+             if (tabId === 'موجودی براساس مشتری' || tabId === 'وضعیت بارفروشها') targetStickyKeyword = 'نام مشتری';
+             else if (tabId === 'موجودی کالا') targetStickyKeyword = 'نام کالا';
+             
+             let normTarget = replaceArabicChars(targetStickyKeyword).replace(/ |\u200C/g, '');
+             keys.forEach(key => {
+                 if (replaceArabicChars(key).replace(/ |\u200C/g, '').includes(normTarget)) anchor2Id = key;
+             });
+          }
+
+          keys.forEach((key) => {
+            const normKey = replaceArabicChars(key);
+            let type = 'string';
+            if (isFinancialColumn(key)) type = 'money';
+            else if (normKey.includes('تاریخ')) type = 'date';
+            
+            if (normKey.includes('شرح') || normKey.includes('توضیحات') || normKey.includes('کالا')) type = 'longstring';
+            
+            let stickyIndex = 0;
+            if (key === anchor1Id) stickyIndex = 1;
+            else if (key === anchor2Id) stickyIndex = 2;
+
+            cols.push({ id: key, title: key, type: type, visible: true, stickyIndex: stickyIndex });
+          });
+          
+          if (tabId === 'صورت ریز کل مشتریان') {
+             const exactOrder = ['row_index', 'شمارهسند', 'تاریخ', 'عنوانحساب', 'شرح', 'بدهکار', 'بستانکار', 'مانده'];
+             cols.sort((a, b) => {
+                let normA = replaceArabicChars(a.id).replace(/ |\u200C/g, '');
+                let normB = replaceArabicChars(b.id).replace(/ |\u200C/g, '');
+                let idxA = exactOrder.findIndex(kw => normA.includes(kw));
+                let idxB = exactOrder.findIndex(kw => normB.includes(kw));
+                if(a.id === 'row_index') idxA = 0;
+                if(b.id === 'row_index') idxB = 0;
+                if (idxA === -1) idxA = 99;
+                if (idxB === -1) idxB = 99;
+                return idxA - idxB;
+             });
+          }
+        }
+        
+        if (tabId !== 'صورت ریز کل مشتریان') {
+           let rCol = cols.find(c => c.id === 'row_index');
+           if(rCol) rCol.stickyIndex = 1;
+        } else {
+           let rCol = cols.find(c => c.id === 'row_index');
+           if(rCol) rCol.stickyIndex = 0; 
+        }
+
+        STATE.schema[tabId] = cols;
+      });
+
+      if (!STATE.currentTab && STATE.tabs.length > 0) STATE.currentTab = STATE.tabs[0].id;
+    }
+
+    async function fetchDataFromAPI() {
+      showLoadingState();
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error("Network error");
+        const data = await res.json();
+        
+        if (Array.isArray(data) && data.length > 0) {
+          buildDynamicSchema(data);
+          loadPreferences(); 
+          if(STATE.tabs.some(t => t.id === STATE.currentTab)) switchTab(STATE.currentTab);
+          else switchTab(STATE.tabs[0].id);
+          
+          hideLoadingState(); // اضافه شدن مخفی کردن لودینگ
+          
+        } else {
+          showEmptyState();
+        }
+      } catch (err) {
+        showErrorState("خطا در دریافت اطلاعات. وضعیت اینترنت را بررسی کنید.");
+      }
+    }
+
+    function switchTab(tabId) {
+      STATE.currentTab = tabId;
+      document.getElementById('search-input').value = '';
+      document.getElementById('search-input-2').value = '';
+      STATE.sortCol = null;
+      STATE.sortAsc = true;
+      
+      let placeholderText = 'جستجو...';
+      const search2Container = document.getElementById('search-input-2-container');
+
+      if (tabId === 'لیست مالی (بدهکاران)' || tabId === 'لیست مالی (طلبکاران)' || tabId === 'صورت ریز کل مشتریان') {
+         placeholderText = 'جستجو عنوان حساب...';
+         search2Container.classList.add('hidden');
+      } else if (tabId === 'موجودی براساس مشتری' || tabId === 'وضعیت بارفروشها') {
+         placeholderText = 'جستجو نام مشتری...';
+         if (tabId === 'موجودی براساس مشتری') {
+             search2Container.classList.remove('hidden');
+         } else {
+             search2Container.classList.add('hidden');
+         }
+      } else if (tabId === 'موجودی کالا') {
+         placeholderText = 'جستجو نام کالا...';
+         search2Container.classList.add('hidden');
+      }
+      document.getElementById('search-input').placeholder = placeholderText;
+      
+      const tabsHtml = STATE.tabs.map(t => `
+        <button onclick="switchTab('${t.id}')" class="px-4 py-2 rounded-lg text-xs sm:text-[13px] font-bold transition-all whitespace-nowrap ${STATE.currentTab === t.id ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-600 bg-white hover:bg-slate-50 border border-slate-100'}">
+          ${toPersianDigits(t.title)}
+        </button>
+      `).join('');
+      document.getElementById('tabs-container').innerHTML = tabsHtml;
+
+      buildColumnMenu();
+      handleSearch();
+    }
+
+    function goToCustomerDetails(customerName) {
+      const targetTabId = 'صورت ریز کل مشتریان';
+      if (STATE.tabs.some(t => t.id === targetTabId)) {
+          switchTab(targetTabId);
+          document.getElementById('search-input').value = customerName;
+          handleSearch();
+      }
+    }
+
+    function goToProductDetails(productName) {
+      const targetTabId = 'موجودی براساس مشتری';
+      if (STATE.tabs.some(t => t.id === targetTabId)) {
+          switchTab(targetTabId);
+          document.getElementById('search-input-2').value = productName;
+          handleSearch();
+      }
+    }
+
+    function applySort() {
+      if (!STATE.sortCol) return;
+      const schema = STATE.schema[STATE.currentTab];
+      const colDef = schema.find(c => c.id === STATE.sortCol);
+      if (!colDef) return;
+
+      STATE.filteredData.sort((a, b) => {
+        let valA = a[STATE.sortCol];
+        let valB = b[STATE.sortCol];
+
+        if (colDef.type === 'money' || colDef.type === 'index') {
+          let numA = extractNumber(valA) || 0;
+          let numB = extractNumber(valB) || 0;
+          return STATE.sortAsc ? numA - numB : numB - numA;
+        } else {
+          let strA = String(valA || '').trim();
+          let strB = String(valB || '').trim();
+          return STATE.sortAsc ? strA.localeCompare(strB, 'fa') : strB.localeCompare(strA, 'fa');
+        }
+      });
+    }
+
+    function handleSort(colId) {
+      if (STATE.sortCol === colId) {
+        STATE.sortAsc = !STATE.sortAsc; 
+      } else {
+        STATE.sortCol = colId;
+        STATE.sortAsc = true; 
+      }
+      
+      applySort();
+      precomputeRowClasses(); 
+      renderTableHeaders();
+      renderTableBody();
+    }
+
+    function precomputeRowClasses() {
+      let currentSanad = null;
+      let isGroupOdd = true;
+      
+      const schema = STATE.schema[STATE.currentTab] || [];
+      const sanadCol = schema.find(c => {
+         let norm = replaceArabicChars(c.title).replace(/ |\u200C/g, '');
+         return norm.includes('شمارهسند');
+      })?.id;
+
+      STATE.filteredData.forEach((row, idx) => {
+         if (STATE.currentTab === 'صورت ریز کل مشتریان' && sanadCol) {
+             let rowSanad = row[sanadCol];
+             if (rowSanad !== currentSanad && rowSanad !== '' && rowSanad !== undefined) {
+                 isGroupOdd = !isGroupOdd;
+                 currentSanad = rowSanad;
+             }
+             row._bgClass = isGroupOdd ? 'row-group-1' : 'row-group-2';
+         } else {
+             row._bgClass = idx % 2 === 0 ? 'row-group-1' : 'row-group-alt';
+         }
+      });
+    }
+
+    function handleSearch() {
+      const q1 = toPersianDigits(document.getElementById('search-input').value.toLowerCase().trim());
+      const q2 = toPersianDigits(document.getElementById('search-input-2').value.toLowerCase().trim());
+      const data = STATE.rawData[STATE.currentTab] || [];
+      
+      if (!q1 && !q2) { 
+        STATE.filteredData = [...data]; 
+      } else {
+        let targetColId1 = null;
+        let targetColId2 = null;
+        const schema = STATE.schema[STATE.currentTab] || [];
+
+        let targetColKeyword1 = '';
+        if (STATE.currentTab === 'لیست مالی (بدهکاران)' || 
+            STATE.currentTab === 'لیست مالی (طلبکاران)' || 
+            STATE.currentTab === 'صورت ریز کل مشتریان') {
+            targetColKeyword1 = 'عنوان حساب';
+        } else if (STATE.currentTab === 'موجودی براساس مشتری' || STATE.currentTab === 'وضعیت بارفروشها') {
+            targetColKeyword1 = 'نام مشتری';
+            if (STATE.currentTab === 'موجودی براساس مشتری') {
+                const col2 = schema.find(c => replaceArabicChars(c.title).replace(/ |\u200C/g, '').includes('نامکالا'));
+                if (col2) targetColId2 = col2.id;
+            }
+        } else if (STATE.currentTab === 'موجودی کالا') {
+            targetColKeyword1 = 'نام کالا';
+        }
+
+        if (targetColKeyword1) {
+            const col1 = schema.find(c => {
+                let normTitle = replaceArabicChars(c.title).replace(/ |\u200C/g, '');
+                let normKw = replaceArabicChars(targetColKeyword1).replace(/ |\u200C/g, '');
+                return normTitle.includes(normKw);
+            });
+            if (col1) targetColId1 = col1.id;
+        }
+
+        STATE.filteredData = data.filter(row => {
+            let match1 = true;
+            let match2 = true;
+
+            if (q1) {
+                if (targetColId1) {
+                    let val = row[targetColId1];
+                    match1 = val !== null && val !== undefined && (String(val).toLowerCase().includes(q1) || toPersianDigits(val).includes(q1));
+                } else {
+                    match1 = Object.values(row).some(v => v !== null && v !== undefined && (String(v).toLowerCase().includes(q1) || toPersianDigits(v).includes(q1)));
+                }
+            }
+
+            if (q2 && STATE.currentTab === 'موجودی براساس مشتری') {
+                if (targetColId2) {
+                    let val2 = row[targetColId2];
+                    match2 = val2 !== null && val2 !== undefined && (String(val2).toLowerCase().includes(q2) || toPersianDigits(val2).includes(q2));
+                } else {
+                    match2 = Object.values(row).some(v => v !== null && v !== undefined && (String(v).toLowerCase().includes(q2) || toPersianDigits(v).includes(q2)));
+                }
+            }
+
+            return match1 && match2;
+        });
+      }
+      
+      STATE.page = 1;
+      applySort(); 
+      precomputeRowClasses();
+      buildSummaryCards();
+      renderTableHeaders();
+      renderTableBody();
+      renderPagination();
+    }
+
+    function buildSummaryCards() {
+      const data = STATE.filteredData;
+      const schema = STATE.schema[STATE.currentTab] || [];
+      const container = document.getElementById('summary-cards');
+      
+      let cards = [];
+      cards.push({ t: 'تعداد رکوردها', v: data.length, cls: 'text-slate-800 border-slate-100 bg-white' });
+
+      const findColByKeywords = (keywords) => {
+         const found = schema.find(c => {
+             const norm = replaceArabicChars(c.title).replace(/ |\u200C/g, '');
+             return keywords.some(kw => norm.includes(kw));
+         });
+         return found ? found.id : null;
+      };
+
+      if (STATE.currentTab === 'لیست مالی (بدهکاران)') {
+        let debKey = findColByKeywords(['بدهکار', 'مانده', 'مبلغ']);
+        if (debKey) {
+           let sum = data.reduce((acc, row) => acc + (extractNumber(row[debKey]) || 0), 0);
+           cards.push({ t: 'جمع کل بدهی', v: sum, cls: 'text-debit bg-debit' }); 
+        }
+      } 
+      else if (STATE.currentTab === 'لیست مالی (طلبکاران)') {
+        let credKey = findColByKeywords(['بستانکار', 'طلبکار', 'مانده', 'مبلغ']);
+        if (credKey) {
+           let sum = data.reduce((acc, row) => acc + (extractNumber(row[credKey]) || 0), 0);
+           cards.push({ t: 'جمع کل طلب‌ها', v: sum, cls: 'text-credit bg-credit' }); 
+        }
+      } 
+      else if (STATE.currentTab === 'صورت ریز کل مشتریان') {
+        let debKey = findColByKeywords(['بدهکار']);
+        let credKey = findColByKeywords(['بستانکار', 'طلبکار']);
+        
+        let sDeb = 0, sCred = 0;
+        data.forEach(r => {
+           if(debKey) sDeb += (extractNumber(r[debKey]) || 0);
+           if(credKey) sCred += (extractNumber(r[credKey]) || 0);
+        });
+        
+        let sBal = sDeb - sCred; 
+
+        if (debKey) cards.push({ t: 'بدهکاران', v: sDeb, cls: 'text-debit bg-debit' });
+        if (credKey) cards.push({ t: 'بستانکاران', v: sCred, cls: 'text-credit bg-credit' });
+        cards.push({ t: 'مانده کل', v: sBal, cls: sBal >= 0 ? 'text-debit bg-debit' : 'text-credit bg-credit' });
+      }
+      else if (STATE.currentTab.includes('موجودی')) {
+        let inKey = findColByKeywords(['ورودی']);
+        let outKey = findColByKeywords(['خروجی']);
+        let balKey = findColByKeywords(['مانده']);
+        
+        let sumIn = 0, sumOut = 0, sumBal = 0;
+        data.forEach(r => {
+           if(inKey) sumIn += (extractNumber(r[inKey]) || 0);
+           if(outKey) sumOut += (extractNumber(r[outKey]) || 0);
+           if(balKey) sumBal += (extractNumber(r[balKey]) || 0);
+        });
+
+        if (inKey) cards.push({ t: 'ورودی', v: sumIn, cls: 'text-debit bg-debit' });
+        if (outKey) cards.push({ t: 'خروجی', v: sumOut, cls: 'text-credit bg-credit' });
+        if (balKey) cards.push({ t: 'مانده', v: sumBal, cls: sumBal >= 0 ? 'text-debit bg-debit' : 'text-credit bg-credit' });
+      }
+      else if (STATE.currentTab === 'وضعیت بارفروشها') {
+        let balKey = findColByKeywords(['مانده', 'ماانده']);
+        let safiKey = findColByKeywords(['صافی']);
+        
+        let sumBal = 0, sumSafi = 0;
+        data.forEach(r => {
+           if(balKey) sumBal += (extractNumber(r[balKey]) || 0);
+           if(safiKey) sumSafi += (extractNumber(r[safiKey]) || 0);
+        });
+
+        if (balKey) cards.push({ t: 'جمع مانده حساب', v: sumBal, cls: sumBal >= 0 ? 'text-debit bg-debit' : 'text-credit bg-credit' });
+        if (safiKey) cards.push({ t: 'جمع تعداد صافی', v: sumSafi, cls: 'text-slate-800 border border-slate-200 bg-white' });
+      }
+
+      container.innerHTML = cards.map(c => `
+        <div class="rounded-lg p-3 border shadow-sm flex flex-col relative ${c.cls}">
+          <span class="text-[11px] sm:text-xs font-bold opacity-80 mb-1 z-10">${c.t}</span>
+          <span class="text-sm sm:text-base font-black z-10 font-mono" dir="ltr">${formatFa(c.v)}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderTableHeaders() {
+      const schema = (STATE.schema[STATE.currentTab] || []).filter(c => c.visible);
+      document.getElementById('main-table').className = STATE.densityClasses[STATE.density];
+      
+      const isSooratRiz = STATE.currentTab === 'صورت ریز کل مشتریان';
+      
+      const html = schema.map(col => {
+        let sortIcon = '';
+        if (STATE.sortCol === col.id) {
+           sortIcon = STATE.sortAsc 
+             ? '<svg class="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>'
+             : '<svg class="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>';
+        }
+
+        let stickyClass = '';
+        if (col.stickyIndex === 1) stickyClass = 'sticky-col-1';
+        else if (col.stickyIndex === 2) stickyClass = 'sticky-col-2';
+
+        let borderClass = 'border-l border-slate-100';
+        if (col.stickyIndex === 1 && !isSooratRiz) borderClass = '';
+        if (isSooratRiz && col.stickyIndex === 0) borderClass = '';
+        
+        let titleClass = (col.type === 'money' || col.type === 'index') ? 'justify-end' : 'justify-start';
+        
+        return `<th onclick="handleSort('${col.id}')" class="${stickyClass} ${borderClass}">
+          <div class="flex items-center gap-1.5 ${titleClass}">
+            <span class="text-xs sm:text-[13px] tracking-tight">${toPersianDigits(col.title)}</span>
+            ${sortIcon}
+          </div>
+        </th>`;
+      }).join('');
+      
+      document.getElementById('table-head-row').innerHTML = html;
+    }
+
+    function renderTableBody() {
+      const tbody = document.getElementById('table-body');
+      const data = STATE.filteredData;
+      const schema = (STATE.schema[STATE.currentTab] || []).filter(c => c.visible);
+      
+      const start = (STATE.page - 1) * STATE.rowsPerPage;
+      const end = start + STATE.rowsPerPage;
+      const pageData = data.slice(start, end);
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${schema.length}" class="text-center py-8 text-slate-500 font-medium text-sm">ردیفی برای نمایش یافت نشد.</td></tr>`;
+        return;
+      }
+      
+      const isSooratRiz = STATE.currentTab === 'صورت ریز کل مشتریان';
+      
+      let html = '';
+      pageData.forEach((row, i) => {
+        html += `<tr class="${row._bgClass}">`;
+        
+        schema.forEach(col => {
+          let val = row[col.id];
+          let content = val || '-';
+          let tdClass = '';
+          
+          if (col.type === 'longstring') tdClass += ' wrap-text min-w-[200px]';
+          
+          if (col.stickyIndex === 1) tdClass += ' sticky-col-1';
+          else if (col.stickyIndex === 2) tdClass += ' sticky-col-2';
+          
+          let borderClass = 'border-l border-slate-100/50';
+          if (col.stickyIndex === 1 && !isSooratRiz) borderClass = '';
+          if (isSooratRiz && col.stickyIndex === 0) borderClass = '';
+          
+          if (col.type === 'index') {
+             const globalIndex = STATE.rawData[STATE.currentTab].indexOf(row) + 1;
+             content = `<span class="text-slate-400 font-bold">${toPersianDigits(formatFa(globalIndex))}</span>`;
+             tdClass += ' text-center font-mono';
+          } 
+          else if (col.type === 'date') {
+             content = `<span class="text-slate-600 font-mono tracking-tight" dir="ltr">${formatDateTime(val)}</span>`;
+             tdClass += ' text-right';
+          }
+          else if (col.type === 'money') {
+             let num = extractNumber(val);
+             let txtColor = 'text-slate-700';
+             let normTitle = replaceArabicChars(col.title).replace(/ |\u200C/g, '');
+             
+             if (normTitle.includes('بدهکار') || normTitle.includes('ورودی')) txtColor = 'text-emerald-700';
+             else if (normTitle.includes('بستانکار') || normTitle.includes('طلبکار') || normTitle.includes('خروجی')) txtColor = 'text-rose-600';
+             else if (normTitle.includes('مانده') || normTitle.includes('ماانده')) txtColor = num >= 0 ? 'text-emerald-700' : 'text-rose-600';
+
+             content = `<span class="font-black ${txtColor} font-mono tracking-tight text-[13px] sm:text-[14px]" dir="ltr">${formatFa(num)}</span>`;
+             tdClass += ' text-left';
+          } 
+          else {
+             content = `<span class="text-slate-700 font-medium">${toPersianDigits(val || '-')}</span>`;
+             
+             if (STATE.currentTab === 'لیست مالی (بدهکاران)' || STATE.currentTab === 'لیست مالی (طلبکاران)') {
+                 let normTitle = replaceArabicChars(col.title).replace(/ |\u200C/g, '');
+                 if (normTitle.includes('عنوانحساب') && val) {
+                    content = `<a href="javascript:void(0)" onclick="goToCustomerDetails('${val}')" class="text-indigo-600 hover:text-indigo-800 font-bold underline underline-offset-4 decoration-indigo-300 transition-colors">${toPersianDigits(val)}</a>`;
+                 }
+             }
+             if (STATE.currentTab === 'موجودی کالا') {
+                 let normTitle = replaceArabicChars(col.title).replace(/ |\u200C/g, '');
+                 if (normTitle.includes('نامکالا') && val) {
+                    content = `<a href="javascript:void(0)" onclick="goToProductDetails('${val}')" class="text-indigo-600 hover:text-indigo-800 font-bold underline underline-offset-4 decoration-indigo-300 transition-colors">${toPersianDigits(val)}</a>`;
+                 }
+             }
+          }
+          
+          html += `<td class="${tdClass} ${borderClass}">${content}</td>`;
+        });
+        html += '</tr>';
+      });
+
+      tbody.innerHTML = html;
+      document.getElementById('table-wrapper').scrollTop = 0;
+      document.getElementById('table-wrapper').scrollLeft = document.getElementById('table-wrapper').scrollWidth;
+    }
+
+    function renderPagination() {
+      const totalRows = STATE.filteredData.length;
+      const totalPages = Math.ceil(totalRows / STATE.rowsPerPage) || 1;
+      
+      const start = totalRows === 0 ? 0 : ((STATE.page - 1) * STATE.rowsPerPage) + 1;
+      const end = Math.min(STATE.page * STATE.rowsPerPage, totalRows);
+      
+      document.getElementById('page-info').innerHTML = `نمایش ${toPersianDigits(formatFa(start))} تا ${toPersianDigits(formatFa(end))} از ${toPersianDigits(formatFa(totalRows))}`;
+      document.getElementById('rows-per-page-select').value = STATE.rowsPerPage;
+
+      let html = '';
+      if (totalPages > 1) {
+          let prevDis = STATE.page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-200 text-slate-700';
+          html += `<button onclick="changePage(${STATE.page - 1})" class="px-2 py-1 bg-slate-100 rounded text-xs font-bold transition-colors ${prevDis}" ${STATE.page === 1 ? 'disabled' : ''}>قبلی</button>`;
+          
+          let nextDis = STATE.page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-200 text-slate-700';
+          html += `<button onclick="changePage(${STATE.page + 1})" class="px-2 py-1 bg-slate-100 rounded text-xs font-bold transition-colors ${nextDis}" ${STATE.page === totalPages ? 'disabled' : ''}>بعدی</button>`;
+      }
+      document.getElementById('pagination-controls').innerHTML = html;
+    }
+
+    function changePage(newPage) {
+      const totalPages = Math.ceil(STATE.filteredData.length / STATE.rowsPerPage);
+      if (newPage < 1 || newPage > totalPages) return;
+      STATE.page = newPage;
+      renderTableBody();
+      renderPagination();
+    }
+
+    function changeRowsPerPage(val) {
+      STATE.rowsPerPage = parseInt(val);
+      STATE.page = 1;
+      savePreferences();
+      renderTableBody();
+      renderPagination();
+    }
+
+    function cycleDensity() {
+      STATE.density = (STATE.density + 1) % 3;
+      document.getElementById('density-label').innerText = STATE.densityLabels[STATE.density];
+      savePreferences();
+      renderTableHeaders();
+      renderTableBody();
+    }
+
+    function toggleColMenu() {
+      const modal = document.getElementById('col-modal');
+      modal.classList.toggle('hidden');
+    }
+
+    function buildColumnMenu() {
+      const schema = STATE.schema[STATE.currentTab] || [];
+      const container = document.getElementById('col-menu-content');
+      
+      const html = schema.map(col => {
+        let isSticky = col.stickyIndex > 0;
+        let dis = isSticky ? 'disabled' : '';
+        let op = isSticky ? 'opacity-50' : '';
+        let chk = col.visible ? 'checked' : '';
+        
+        return `
+        <label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-slate-100 ${op}">
+          <div class="relative flex items-center">
+             <input type="checkbox" onchange="toggleColumn('${col.id}')" ${chk} ${dis} class="peer sr-only">
+             <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-800"></div>
+          </div>
+          <span class="text-sm font-bold text-slate-700 flex-1">${toPersianDigits(col.title)}</span>
+          ${isSticky ? '<span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold">ثابت</span>' : ''}
+        </label>
+        `;
+      }).join('');
+      container.innerHTML = html;
+    }
+
+    function toggleColumn(colId) {
+      const col = STATE.schema[STATE.currentTab].find(c => c.id === colId);
+      if (col && col.stickyIndex === 0) {
+        col.visible = !col.visible;
+        savePreferences();
+        renderTableHeaders();
+        renderTableBody();
+      }
+    }
+
+    // --- تابع پرینت (چاپ) ---
+    function printCurrentTab() {
+      const printArea = document.getElementById('print-area');
+      const tabTitle = STATE.tabs.find(t => t.id === STATE.currentTab)?.title || '';
+      
+      const summaryNode = document.getElementById('summary-cards').cloneNode(true);
+      summaryNode.className = "grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"; 
+      
+      const schema = (STATE.schema[STATE.currentTab] || []).filter(c => c.visible);
+      
+      let html = `
+        <div style="direction: rtl; font-family: 'Vazirmatn', Tahoma, sans-serif; padding: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px;">
+                <h2 style="font-size: 20px; font-weight: bold; margin: 0;">${toPersianDigits(tabTitle)}</h2>
+                <span style="font-size: 13px; color: #475569; font-weight: bold;">تاریخ چاپ: ${toPersianDigits(new Date().toLocaleDateString('fa-IR'))}</span>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+              ${summaryNode.outerHTML}
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; text-align: right;">
+                <thead>
+                    <tr>
+                        ${schema.map(col => `<th style="border: 1px solid #94a3b8; padding: 8px 6px; background: #e2e8f0; color: #0f172a; font-weight: bold;">${toPersianDigits(col.title)}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${STATE.filteredData.map((row) => `
+                        <tr>
+                            ${schema.map(col => {
+                                let val = row[col.id];
+                                let content = val || '-';
+                                let cellStyle = "border: 1px solid #cbd5e1; padding: 6px;";
+                                
+                                if (col.type === 'index') {
+                                    content = toPersianDigits(formatFa(STATE.rawData[STATE.currentTab].indexOf(row) + 1));
+                                    cellStyle += " text-align: center;";
+                                } else if (col.type === 'date') {
+                                    content = formatDateTime(val);
+                                    cellStyle += " direction: ltr; text-align: right;";
+                                } else if (col.type === 'money') {
+                                    content = formatFa(extractNumber(val));
+                                    cellStyle += " direction: ltr; text-align: right; font-family: monospace;";
+                                } else {
+                                    content = toPersianDigits(val || '-');
+                                }
+                                
+                                return `<td style="${cellStyle}">${content}</td>`;
+                            }).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+      `;
+      
+      printArea.innerHTML = html;
+      
+      setTimeout(() => {
+          window.print();
+      }, 150);
+    }
+
+    function savePreferences() {
+      try {
+        const prefs = {
+           density: STATE.density,
+           rowsPerPage: STATE.rowsPerPage,
+           schemaPrefs: {}
+        };
+        Object.keys(STATE.schema).forEach(tab => {
+           prefs.schemaPrefs[tab] = STATE.schema[tab].map(c => ({ id: c.id, visible: c.visible }));
+        });
+        localStorage.setItem('faraPrefs_v2', JSON.stringify(prefs));
+      } catch(e) {}
+    }
+
+    function loadPreferences() {
+      try {
+        const p = localStorage.getItem('faraPrefs_v2');
+        if (p) {
+           const prefs = JSON.parse(p);
+           if (prefs.density !== undefined) STATE.density = prefs.density;
+           if (prefs.rowsPerPage !== undefined) STATE.rowsPerPage = prefs.rowsPerPage;
+           if (prefs.schemaPrefs) {
+               Object.keys(prefs.schemaPrefs).forEach(tab => {
+                   if (STATE.schema[tab]) {
+                       prefs.schemaPrefs[tab].forEach(savedCol => {
+                           let sc = STATE.schema[tab].find(c => c.id === savedCol.id);
+                           if (sc && sc.stickyIndex === 0) sc.visible = savedCol.visible;
+                       });
+                   }
+               });
+           }
+        }
+      } catch(e) {}
+      document.getElementById('density-label').innerText = STATE.densityLabels[STATE.density];
+    }
+
+    function showLoadingState() {
+      document.getElementById('loading-state').classList.remove('hidden');
+      document.getElementById('error-state').classList.add('hidden');
+      document.getElementById('empty-state').classList.add('hidden');
+      document.getElementById('table-wrapper').classList.add('hidden');
+    }
+
+    function hideLoadingState() {
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('table-wrapper').classList.remove('hidden');
+    }
+
+    function showErrorState(msg) {
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('table-wrapper').classList.add('hidden');
+      document.getElementById('error-state').classList.remove('hidden');
+      if (msg) document.getElementById('error-message').innerText = msg;
+    }
+
+    function showEmptyState() {
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('table-wrapper').classList.add('hidden');
+      document.getElementById('empty-state').classList.remove('hidden');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchDataFromAPI();
+    });
+  </script>
+</body>
+</html>
